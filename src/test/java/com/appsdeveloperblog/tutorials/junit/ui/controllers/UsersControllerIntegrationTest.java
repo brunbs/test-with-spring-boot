@@ -18,10 +18,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS) //Object instance keeps for the entire class and not for methods
 public class UsersControllerIntegrationTest {
 
     @Autowired
     private TestRestTemplate testRestTemplate;
+
+    private String authorizationToken;
 
     @Test
     @DisplayName("User can be created")
@@ -85,12 +88,32 @@ public class UsersControllerIntegrationTest {
 
         //Act
         ResponseEntity response = testRestTemplate.postForEntity("/users/login", request, null);
-
+        authorizationToken = response.getHeaders().getValuesAsList(SecurityConstants.HEADER_STRING).get(0);
 
         //Assert
         assertEquals(HttpStatus.OK, response.getStatusCode(), "Http Status Code Should Be 200");
         assertNotNull(response.getHeaders().getValuesAsList(SecurityConstants.HEADER_STRING).get(0), "Response should contain Authorization header with JWT");
         assertNotNull(response.getHeaders().getValuesAsList("UserID").get(0), "Response should contain User ID in response header");
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("GET /users works")
+    void testGetUsers_whenValidJWTProvided_returnsUsers() {
+        //Arrange
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+        headers.setBearerAuth(authorizationToken);
+
+        HttpEntity requestEntity = new HttpEntity(null, headers);
+
+        //Act
+        ResponseEntity<List<UserRest>> response = testRestTemplate.exchange("/users", HttpMethod.GET, requestEntity, new ParameterizedTypeReference<List<UserRest>>() {
+        });
+        
+        //Assert
+        assertEquals(HttpStatus.OK, response.getStatusCode(), "Http Status should be 200 OK");
+        assertTrue(response.getBody().size() == 1, "Should be exactly 1 user in the list");
     }
 
 }
