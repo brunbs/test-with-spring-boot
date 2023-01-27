@@ -110,7 +110,7 @@ public class UsersControllerIntegrationTest {
         //Act
         ResponseEntity<List<UserRest>> response = testRestTemplate.exchange("/users", HttpMethod.GET, requestEntity, new ParameterizedTypeReference<List<UserRest>>() {
         });
-        
+
         //Assert
         assertEquals(HttpStatus.OK, response.getStatusCode(), "Http Status should be 200 OK");
         assertTrue(response.getBody().size() == 1, "Should be exactly 1 user in the list");
