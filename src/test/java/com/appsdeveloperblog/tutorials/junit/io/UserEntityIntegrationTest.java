@@ -45,13 +45,34 @@ public class UserEntityIntegrationTest {
     }
 
     @Test
-    void testUserEntity_whenFirstNameIsTooLong_shouldThrowExceptio() {
+    void testUserEntity_whenFirstNameIsTooLong_shouldThrowException() {
         //Arrange
         userEntity.setFirstName("23123131312312?23131312312?23131312312?23131312312?23131312312?23131312312?");
 
         //Assert & Act
         assertThrows(PersistenceException.class, () -> {
             UserEntity storedUserEntity = testEntityManager.persistAndFlush(userEntity);
+        }, "Was expecting a Persistance Exception to be thrown");
+
+    }
+
+    @Test
+    void testUserEntity_whenUserIdAlreadyExists_shouldThrowException() {
+       //Arrange
+        UserEntity newUser = new UserEntity();
+        newUser.setUserId("1");
+        newUser.setFirstName("test");
+        newUser.setLastName("test");
+        newUser.setEmail("test@email.com");
+        newUser.setEncryptedPassword("12345678");
+
+        testEntityManager.persistAndFlush(newUser);
+
+        userEntity.setUserId("1");
+
+        //Act & Assert
+        assertThrows(PersistenceException.class, () -> {
+            testEntityManager.persistAndFlush(userEntity);
         }, "Was expecting a Persistance Exception to be thrown");
 
     }
